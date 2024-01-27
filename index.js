@@ -8,7 +8,7 @@ const app = express();
 const userRouter = require("./routers/userRouter");
 const postRouter = require("./routers/postRouter");
 const notFound = require("./middlewares/notFound");
-const errorHandler = require("./middlewares/errorHandler");
+const globalErrorHandler = require("./middlewares/globalErrorHandler");
 // middleware definitions
 app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
 app.use(express.json({ extended: true }));
@@ -19,7 +19,7 @@ app.use("/api/users", userRouter);
 app.use("/api/posts", postRouter);
 
 app.use(notFound);
-app.use(errorHandler);
+app.use(globalErrorHandler);
 
 async function start() {
   try {

@@ -1,7 +1,10 @@
+const customErrorHandler = require("../utils/customErrorHandler");
+
 const notFound = (req, res, next) => {
-  const error = new Error(`unknown url - ${req.originalUrl}`);
-  // error.message here is defines as "unknown url - req.originalUrl"
-  error.code = 404;
+  const error = new customErrorHandler(
+    `Can't find this url: ${req.originalUrl} on the server`,
+    404
+  );
   next(error);
 };
 

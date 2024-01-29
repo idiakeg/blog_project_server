@@ -1,14 +1,22 @@
 const asyncErrorHandler = require("../utils/asyncErrorHandler");
 const userModel = require("../models/userSchema");
+const customErrorHandler = require("../utils/customErrorHandler");
 
 // post request || /api/users/register || unprotected
 // ----> Register new user
 const regisiterUser = asyncErrorHandler(async (req, res, next) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, confirm_password } = req.body;
 
-  if (!name || !email || !password) {
-    const error = new Error("all fields are required");
-    error.statusCode = 400;
+  if (!name || !email || !password || !confirm_password) {
+    const error = new customErrorHandler("all fields are required", 400);
+    return next(error);
+  }
+
+  if (password !== confirm_password) {
+    const error = new customErrorHandler(
+      "password and confirm_password do not match!",
+      400
+    );
     return next(error);
   }
   const newUser = await userModel.create(req.body);

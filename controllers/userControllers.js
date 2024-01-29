@@ -28,7 +28,7 @@ const editUser = (req, res) => {
   res.json("edit user details");
 };
 
-// get request || /api/users/authors || unprotected
+// get request || /api/users/ || unprotected
 // ------> Get all authors/users
 const getAuthors = (req, res) => {
   res.json("get all authors");

@@ -16,6 +16,6 @@ router.post("/login", loginUser);
 router.post("/change_avatar", changeAvatar);
 router.patch("/edit_user", editUser);
 router.get("/:id", getUser);
-router.get("/authors", getAuthors);
+router.get("/", getAuthors);
 
 module.exports = router;

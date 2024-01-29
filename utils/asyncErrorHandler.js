@@ -1,5 +1,5 @@
 const asyncErrorHandler = (func) => {
-  return () => {
+  return (req, res, next) => {
     try {
       func(req, res, next);
     } catch (error) {
@@ -7,3 +7,5 @@ const asyncErrorHandler = (func) => {
     }
   };
 };
+
+module.exports = asyncErrorHandler;

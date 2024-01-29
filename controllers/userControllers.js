@@ -1,8 +1,25 @@
+const asyncErrorHandler = require("../utils/asyncErrorHandler");
+const userModel = require("../models/userSchema");
+
 // post request || /api/users/register || unprotected
 // ----> Register new user
-const regisiterUser = (req, res) => {
-  res.json("register user route");
-};
+const regisiterUser = asyncErrorHandler(async (req, res, next) => {
+  const { name, email, password } = req.body;
+
+  if (!name || !email || !password) {
+    const error = new Error("all fields are required");
+    error.statusCode = 400;
+    return next(error);
+  }
+  const newUser = await userModel.create(req.body);
+
+  return res.status(200).json({
+    status: "success",
+    data: {
+      user: newUser,
+    },
+  });
+});
 
 // post request || /api/users/login || unprotected
 // -----> login a registered user, after a new user is registered, they are directed to then login

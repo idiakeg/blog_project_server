@@ -1,11 +1,14 @@
 const asyncErrorHandler = (func) => {
   return (req, res, next) => {
-    try {
-      func(req, res, next);
-    } catch (error) {
-      next(error);
-    }
+    func(req, res, next).catch((error) => next(error));
   };
+  // return async (req, res, next) => {
+  //   try {
+  //     await func(req, res, next);
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // };
 };
 
 module.exports = asyncErrorHandler;

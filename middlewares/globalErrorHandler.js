@@ -19,6 +19,13 @@ const duplicateKeyErrorHandler = (err) => {
   return new customErrorHandler(msg, 400);
 };
 
+const validationErrorHandler = (err) => {
+  const msg = `Invalid input data: ${Object.values(err.errors)
+    .map((item) => item.message)
+    .join(". ")}`;
+  return new customErrorHandler(msg, 400);
+};
+
 const prodError = (res, err) => {
   // check if the error object has the isOperational property
   if (err.isOperational) {
@@ -51,6 +58,10 @@ const globalErrorHandler = (err, req, res, next) => {
     // if it is a duplicate key error
     if (err.code === 11000) {
       err = duplicateKeyErrorHandler(err);
+    }
+    // if it is a validation error
+    if (err.name === "ValidationError") {
+      err = validationErrorHandler(err);
     }
     prodError(res, err);
   }

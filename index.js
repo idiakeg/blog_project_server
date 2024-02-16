@@ -4,6 +4,7 @@ require("dotenv").config();
 const port = process.env.PORT;
 const connectToDB = require("./db_connection");
 const app = express();
+const upload = require("express-fileupload");
 
 const userRouter = require("./routers/userRouter");
 const postRouter = require("./routers/postRouter");
@@ -13,6 +14,8 @@ const globalErrorHandler = require("./middlewares/globalErrorHandler");
 app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
 app.use(express.json({ extended: true }));
 app.use(express.urlencoded({ extended: true }));
+app.use(upload());
+app.use("/uploads", express.static(__dirname + "/uploads"));
 
 // route definitions
 app.use("/api/users", userRouter);
@@ -20,6 +23,8 @@ app.use("/api/posts", postRouter);
 
 app.use(notFound);
 app.use(globalErrorHandler);
+
+// console.log(process.env);
 
 async function start() {
   try {

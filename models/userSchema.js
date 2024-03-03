@@ -20,6 +20,7 @@ const userSchema = new Schema(
       type: String,
       required: [true, "Please enter a password"],
       minlength: 8,
+      select: false, //this ensures that when a request is made to get users, the password field is not returned as part of the response, this would have been done also on the confirm_password field but the has already been set to undefined, so it will not be returned anyway, to the user or in the mongo database
     },
     confirm_password: {
       type: String,
@@ -55,6 +56,11 @@ userSchema.pre("save", async function (next) {
   // set the confirm password field to undefined so it is not saved in the database
   this.confirm_password = undefined;
 });
+
+// create an instance method to compare password provided by the user and the one in the DB
+userSchema.methods.comparePassword = async function (pswdByUser, pswdInDb) {
+  return await bcrypt.compare(pswdByUser, pswdInDb);
+};
 
 const userModel = model("User", userSchema);
 

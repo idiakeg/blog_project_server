@@ -1,3 +1,4 @@
+const { JsonWebTokenError } = require("jsonwebtoken");
 const customErrorHandler = require("../utils/customErrorHandler");
 
 const devError = (res, err) => {
@@ -24,6 +25,16 @@ const validationErrorHandler = (err) => {
     .map((item) => item.message)
     .join(". ")}`;
   return new customErrorHandler(msg, 400);
+};
+
+const jwtError = (err) => {
+  const msg = "Invalid token. Please login again";
+  return new customErrorHandler(msg, 401);
+};
+
+const tokenExpiredError = (err) => {
+  const msg = "JWT has expired. Please login again.";
+  return new customErrorHandler(msg, 401);
 };
 
 const prodError = (res, err) => {
@@ -62,6 +73,14 @@ const globalErrorHandler = (err, req, res, next) => {
     // if it is a validation error
     if (err.name === "ValidationError") {
       err = validationErrorHandler(err);
+    }
+    // if it is a jwt error (invalid token or signature)
+    if (err.name === "JsonWebTokenError") {
+      err = jwtError(err);
+    }
+    // if it is an expired jwt error
+    if (err.name === "TokenExpiredError") {
+      err = tokenExpiredError(err);
     }
     prodError(res, err);
   }

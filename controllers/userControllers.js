@@ -4,6 +4,7 @@ const customErrorHandler = require("../utils/customErrorHandler");
 const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const path = require("path");
+const { v4: uuid } = require("uuid");
 
 // post request || /api/users/register || unprotected
 // ----> Register new user
@@ -86,12 +87,12 @@ const changeAvatar = asyncErrorHandler(async (req, res, next) => {
   // if an avatar exists, delete it.
   if (user.avatar) {
     fs.unlink(path.join(__dirname, "..", "uploads", user.avatar), (err) => {
-      return new customErrorHandler(err);
+      return next(new customErrorHandler(err));
     });
   }
 
   //check the file size of the avatar. note 1000bytes =1kb, 500000bytes = 500kb.
-  if (image > 500000) {
+  if (image.size > 500000) {
     return next(
       new customErrorHandler(
         "Profile picture too big. Should be less than 500kb",
@@ -101,10 +102,33 @@ const changeAvatar = asyncErrorHandler(async (req, res, next) => {
   }
 
   // if the file size is within range, change the name of the file, to ensure uniqueness.
+  let fileName = image.name;
+  const splittedFileName = fileName.split(".");
+  let newFileName =
+    splittedFileName[0] +
+    uuid() +
+    "." +
+    splittedFileName[splittedFileName.length - 1];
 
-  // check the size of the image and rename it before uploading
-  // console.log(file);
-  res.status(200).json(image);
+  // upload the file. use the mv function to move
+  image.mv(path.join(__dirname, "..", "uploads", newFileName), async (err) => {
+    if (err) {
+      return next(new customErrorHandler(err));
+    }
+    const updatedAvatar = await userModel.findByIdAndUpdate(
+      req.user.id,
+      {
+        avatar: newFileName,
+      },
+      { new: true }
+    );
+
+    if (!updatedAvatar) {
+      return next(new customErrorHandler(err));
+    }
+
+    res.status(200).json(updatedAvatar);
+  });
 });
 
 // post request || /api/users/edit_user || protected

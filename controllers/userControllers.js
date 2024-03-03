@@ -87,7 +87,9 @@ const changeAvatar = asyncErrorHandler(async (req, res, next) => {
   // if an avatar exists, delete it.
   if (user.avatar) {
     fs.unlink(path.join(__dirname, "..", "uploads", user.avatar), (err) => {
-      return next(new customErrorHandler(err));
+      if (err) {
+        return next(new customErrorHandler(err));
+      }
     });
   }
 

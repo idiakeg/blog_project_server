@@ -90,6 +90,18 @@ const changeAvatar = asyncErrorHandler(async (req, res, next) => {
     });
   }
 
+  //check the file size of the avatar. note 1000bytes =1kb, 500000bytes = 500kb.
+  if (image > 500000) {
+    return next(
+      new customErrorHandler(
+        "Profile picture too big. Should be less than 500kb",
+        422
+      )
+    );
+  }
+
+  // if the file size is within range, change the name of the file, to ensure uniqueness.
+
   // check the size of the image and rename it before uploading
   // console.log(file);
   res.status(200).json(image);

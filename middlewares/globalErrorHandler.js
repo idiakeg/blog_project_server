@@ -1,4 +1,3 @@
-const { JsonWebTokenError } = require("jsonwebtoken");
 const customErrorHandler = require("../utils/customErrorHandler");
 
 const devError = (res, err) => {

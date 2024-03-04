@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const path = require("path");
 const { v4: uuid } = require("uuid");
+const bcrypt = require("bcrypt");
 
 // post request || /api/users/register || unprotected
 // ----> Register new user
@@ -135,9 +136,48 @@ const changeAvatar = asyncErrorHandler(async (req, res, next) => {
 
 // post request || /api/users/edit_user || protected
 // ------> Edit user details
-const editUser = (req, res) => {
-  res.json("edit user details");
-};
+const editUser = asyncErrorHandler(async (req, res, next) => {
+  const { name, email, currentPassword, newPassword, newConfirmPassword } =
+    req.body;
+  if (!email || !name || !currentPassword || !newPassword) {
+    return next(new customErrorHandler("Fill in all fields.", 422));
+  }
+  // find the user based on the id provided by the protect middleware
+  const user = await userModel.findById(req.user.id).select("+password");
+  if (!user) {
+    return next(new customErrorHandler("User not found.", 403));
+  }
+
+  // make sure a user with the provded email doesnot exist
+  const emailExists = await userModel.findOne({ email });
+  if (emailExists && emailExists._id.toString() !== req.user.id) {
+    //essentially checks if a user with the provided id exists and whether or not it is the logged in user. this will prevent one user from changing the email of another user
+    return next(new customErrorHandler("Email already  exist.", 422));
+  }
+
+  // compare passwords
+  const isMatch = await user.comparePassword(currentPassword, user.password); //this is here to ensure that for a user to change her password, they must first provide the currentpassword
+  if (!isMatch) {
+    return next(new customErrorHandler("Invalid current password.", 422));
+  }
+
+  // compare new password and current password
+  if (newPassword !== newConfirmPassword) {
+    return next(new customErrorHandler("New password does not match", 422));
+  }
+
+  // hash the password:
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  // update user information
+  const updatedUser = await userModel.findByIdAndUpdate(
+    req.user.id,
+    { name, email, password: hashedPassword },
+    { new: true }
+  );
+
+  res.status(200).json(updatedUser);
+});
 
 // get request || /api/users/ || unprotected
 // ------> Get all authors/users

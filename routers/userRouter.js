@@ -15,8 +15,8 @@ const {
 router.post("/register", regisiterUser);
 router.post("/login", loginUser);
 router.post("/change_avatar", protectMiddleware, changeAvatar);
-router.patch("/edit_user", editUser);
-router.get("/:id", getUser);
+router.patch("/edit_user", protectMiddleware, editUser);
+router.get("/:id", protectMiddleware, getUser);
 router.get("/", getAuthors);
 
 module.exports = router;

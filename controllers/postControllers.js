@@ -1,13 +1,72 @@
+const customErrorHandler = require("../utils/customErrorHandler");
+const { v4: uuid } = require("uuid");
+const path = require("path");
 const asyncErrorHandler = require("../utils/asyncErrorHandler");
+const postModel = require("../models/postSchema");
+const userModel = require("../models/userSchema");
 
 // protected. api/posts =================== CREATE POSTS
-const createPosts = asyncErrorHandler(async (req, res, next) => {
-  res.json("create posts");
+const createPost = asyncErrorHandler(async (req, res, next) => {
+  const { title, description, category } = req.body;
+  const { thumbnail } = req.files;
+
+  //   check the size of the thumbnail
+  if (thumbnail > 2000000) {
+    return next(
+      new customErrorHandler(
+        "thumbnail too big. File size should be less than 2Mb.",
+        422
+      )
+    );
+  }
+
+  //   rename the file to ensure unique naming of files in the DB
+  let fileName = thumbnail.name;
+  let splittedFileName = fileName.split(".");
+  let newFileName =
+    splittedFileName[0] +
+    uuid() +
+    "." +
+    splittedFileName[splittedFileName.length - 1];
+
+  // move the thumbnail into the upload folder
+  thumbnail.mv(
+    path.join(__dirname, "..", "uploads", newFileName),
+    async (err) => {
+      if (err) {
+        return next(new customErrorHandler(err));
+      }
+    }
+  );
+
+  //  create the post
+  const post = await postModel.create({
+    title,
+    description,
+    category,
+    thumbnail: newFileName,
+    creator: req.user.id,
+  });
+
+  if (!post) {
+    return next(new customErrorHandler("Post could not be created.", 422));
+  }
+
+  //   increse post count for user theat created the post
+  const user = await userModel.findById(req.user.id);
+  const postCount = user.no_of_posts + 1;
+  // update the user post count with the new post count
+  await userModel.findByIdAndUpdate(req.user.id, {
+    no_of_posts: postCount,
+  });
+
+  res.status(201).json(post);
 });
 
 // Unprotected. api/posts ================== GET ALL POSTS
 const getPosts = asyncErrorHandler(async (req, res, next) => {
-  res.json("get all posts");
+  const posts = await postModel.find().sort({ updatedAt: 1 }); // -1: descending(the one that was created or updated last will or most recently will appear at the top). 1: ascending
+  res.status(200).json(posts);
 });
 
 // Unprotected. api/posts/:id ================== GET SINGLE POST
@@ -36,7 +95,7 @@ const deletePost = asyncErrorHandler(async (req, res, next) => {
 });
 
 module.exports = {
-  createPosts,
+  createPost,
   getPosts,
   getSinglePosts,
   getPostByCategory,

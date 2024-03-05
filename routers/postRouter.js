@@ -1,9 +1,9 @@
 const { Router } = require("express");
-
 const router = Router();
+const protectMiddleware = require("../middlewares/protect");
 
 const {
-  createPosts,
+  createPost,
   getPosts,
   getSinglePosts,
   getPostByCategory,
@@ -16,8 +16,8 @@ router.get("/", getPosts);
 router.get("/:id", getSinglePosts);
 router.get("/categories/:category", getPostByCategory);
 router.get("/user/:id", getPostByAuthor);
-router.post("/", createPosts);
-router.patch("/:id", editPost);
-router.delete("/:id", deletePost);
+router.post("/", protectMiddleware, createPost);
+router.patch("/:id", protectMiddleware, editPost);
+router.delete("/:id", protectMiddleware, deletePost);
 
 module.exports = router;

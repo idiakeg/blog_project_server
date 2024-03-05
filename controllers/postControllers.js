@@ -71,7 +71,12 @@ const getPosts = asyncErrorHandler(async (req, res, next) => {
 
 // Unprotected. api/posts/:id ================== GET SINGLE POST
 const getSinglePosts = asyncErrorHandler(async (req, res, next) => {
-  res.json("get single post");
+  const { id } = req.params;
+  const post = await postModel.findById(id);
+  if (!post) {
+    return next(new customErrorHandler("Post not found.", 422));
+  }
+  res.status(200).json(post);
 });
 
 // Unprotected. api/posts/categories/:category  ================== GET POST BY CATEGORY

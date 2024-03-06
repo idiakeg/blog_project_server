@@ -81,7 +81,11 @@ const getSinglePosts = asyncErrorHandler(async (req, res, next) => {
 
 // Unprotected. api/posts/categories/:category  ================== GET POST BY CATEGORY
 const getPostByCategory = asyncErrorHandler(async (req, res, next) => {
-  res.json("get posts by category");
+  const { category } = req.params;
+  const categoryPost = await postModel
+    .find({ category })
+    .sort({ updatedAt: -1 });
+  res.status(200).json(categoryPost);
 });
 
 // Unprotected. api/posts/user/:id  ================== GET POST BY AUTHOR

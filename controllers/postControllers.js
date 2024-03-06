@@ -12,8 +12,12 @@ const createPost = asyncErrorHandler(async (req, res, next) => {
   const { title, description, category } = req.body;
   const thumbnail = req.files?.thumbnail;
 
+  if (!thumbnail) {
+    return next(new customErrorHandler("Please include a thumbnail", 422));
+  }
+
   //   check the size of the thumbnail
-  if (thumbnail > 2000000) {
+  if (thumbnail.size > 2000000) {
     return next(
       new customErrorHandler(
         "thumbnail too big. File size should be less than 2Mb.",

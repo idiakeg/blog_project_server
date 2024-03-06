@@ -90,7 +90,12 @@ const getPostByCategory = asyncErrorHandler(async (req, res, next) => {
 
 // Unprotected. api/posts/user/:id  ================== GET POST BY AUTHOR
 const getPostByAuthor = asyncErrorHandler(async (req, res, next) => {
-  res.json("get posts by author");
+  //   obtain the id of the author
+  const { id } = req.params;
+  const authorPosts = await postModel
+    .find({ creator: id })
+    .sort({ updatedAt: -1 });
+  res.status(200).json(authorPosts);
 });
 
 // protected. api/posts/:id (patch)  ==================  EDIT POST

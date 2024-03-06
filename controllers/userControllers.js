@@ -6,6 +6,8 @@ const fs = require("fs");
 const path = require("path");
 const { v4: uuid } = require("uuid");
 const bcrypt = require("bcrypt");
+const fileRename = require("../utils/fileRename");
+const removeExistingAvatar = require("../utils/removeExistingAvatar");
 
 // post request || /api/users/register || unprotected
 // ----> Register new user
@@ -87,11 +89,7 @@ const changeAvatar = asyncErrorHandler(async (req, res, next) => {
 
   // if an avatar exists, delete it.
   if (user.avatar) {
-    fs.unlink(path.join(__dirname, "..", "uploads", user.avatar), (err) => {
-      if (err) {
-        return next(new customErrorHandler(err));
-      }
-    });
+    removeExistingAvatar(user);
   }
 
   //check the file size of the avatar. note 1000bytes =1kb, 500000bytes = 500kb.
@@ -105,33 +103,28 @@ const changeAvatar = asyncErrorHandler(async (req, res, next) => {
   }
 
   // if the file size is within range, change the name of the file, to ensure uniqueness.
-  let fileName = image.name;
-  const splittedFileName = fileName.split(".");
-  let newFileName =
-    splittedFileName[0] +
-    uuid() +
-    "." +
-    splittedFileName[splittedFileName.length - 1];
+  const newFileName = fileRename(image);
 
   // upload the file. use the mv function to move
   image.mv(path.join(__dirname, "..", "uploads", newFileName), async (err) => {
     if (err) {
       return next(new customErrorHandler(err));
     }
-    const updatedAvatar = await userModel.findByIdAndUpdate(
-      req.user.id,
-      {
-        avatar: newFileName,
-      },
-      { new: true }
-    );
-
-    if (!updatedAvatar) {
-      return next(new customErrorHandler(err));
-    }
-
-    res.status(200).json(updatedAvatar);
   });
+
+  const updatedAvatar = await userModel.findByIdAndUpdate(
+    req.user.id,
+    {
+      avatar: newFileName,
+    },
+    { new: true }
+  );
+
+  if (!updatedAvatar) {
+    return next(new customErrorHandler(err));
+  }
+
+  res.status(200).json(updatedAvatar);
 });
 
 // post request || /api/users/edit_user || protected

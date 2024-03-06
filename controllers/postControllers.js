@@ -4,11 +4,13 @@ const path = require("path");
 const asyncErrorHandler = require("../utils/asyncErrorHandler");
 const postModel = require("../models/postSchema");
 const userModel = require("../models/userSchema");
+const removeExistingAvatar = require("../utils/removeExistingAvatar");
+const fileRename = require("../utils/fileRename");
 
 // protected. api/posts =================== CREATE POSTS
 const createPost = asyncErrorHandler(async (req, res, next) => {
   const { title, description, category } = req.body;
-  const { thumbnail } = req.files;
+  const thumbnail = req.files?.thumbnail;
 
   //   check the size of the thumbnail
   if (thumbnail > 2000000) {
@@ -100,7 +102,71 @@ const getPostByAuthor = asyncErrorHandler(async (req, res, next) => {
 
 // protected. api/posts/:id (patch)  ==================  EDIT POST
 const editPost = asyncErrorHandler(async (req, res, next) => {
-  res.json("edit post");
+  const { id } = req.params;
+  const { title, description, category } = req.body;
+  const thumbnail = req.files?.thumbnail;
+  let editedPost;
+
+  // because of the react quill that is being used, a decription length of less than 12 characters means that the field is empty. React quill has a pararaph opening and closing tag with a break tag, so there are 11 characters in there already.
+  if (!title || !description || description.length < 12 || !category) {
+    return next(new customErrorHandler("All fields are required.", 422));
+  }
+
+  // make it possible to update a blog post without updating the thumbnail
+  if (!thumbnail) {
+    editedPost = await postModel.findByIdAndUpdate(
+      id,
+      { title, category, description },
+      { new: true }
+    );
+
+    if (!editedPost) {
+      return next(new customErrorHandler("Could not update post", 422));
+    }
+
+    return res.status(200).json(editedPost);
+  }
+
+  // if the user wants to also edit the thumbnail of the blog post
+  // get the actual blog post
+  const oldBlogPost = await postModel.findById(id);
+  // delete the old thumbnail
+  removeExistingAvatar(oldBlogPost, "blog");
+  // upload a new thumbnail
+  // check file size
+  if (thumbnail.size > 2000000) {
+    return next(
+      new customErrorHandler(
+        "Thumbnail too large. Should be less than 2Mb",
+        422
+      )
+    );
+  }
+  // rename the file
+  const newFileName = fileRename(thumbnail);
+  //   move the file into the uploads folder
+  thumbnail.mv(path.join(__dirname, "..", "uploads", newFileName), (err) => {
+    if (err) {
+      return next(new customErrorHandler(err));
+    }
+  });
+  // update the blog post with the new details
+  editedPost = await postModel.findByIdAndUpdate(
+    id,
+    {
+      title,
+      description,
+      category,
+      thumbnail: newFileName,
+    },
+    { new: true }
+  );
+
+  if (!editedPost) {
+    return next(new customErrorHandler("Could not update post", 422));
+  }
+
+  res.status(200).json(editedPost);
 });
 
 // protected. api/posts/:id (delete)  ==================  DELETE POST

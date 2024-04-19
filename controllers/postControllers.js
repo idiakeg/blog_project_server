@@ -58,15 +58,20 @@ const createPost = asyncErrorHandler(async (req, res, next) => {
         return next(new customErrorHandler("Post could not be created.", 422));
     }
 
-    //   increse post count for user theat created the post
-    const user = await userModel.findById(req.user.id);
-    const postCount = user.no_of_posts + 1;
-    // update the user post count with the new post count
-    await userModel.findByIdAndUpdate(req.user.id, {
-        no_of_posts: postCount,
-    });
+    // //   increse post count for user theat created the post
+    // const user = await userModel.findById(req.user.id);
+    // const postCount = user.no_of_posts + 1;
+    // // update the user post count with the new post count
+    // await userModel.findByIdAndUpdate(req.user.id, {
+    //     no_of_posts: postCount,
+    // });
 
-    res.status(201).json(post);
+    await userModel.findOneAndUpdate(
+        { _id: req.user.id },
+        { $inc: { no_of_posts: 1 } }
+    );
+
+    res.status(201).json({ status: "success", post });
 });
 
 // Unprotected. api/posts ================== GET ALL POSTS

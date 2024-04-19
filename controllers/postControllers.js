@@ -90,8 +90,9 @@ const getPostByCategory = asyncErrorHandler(async (req, res, next) => {
     const { category } = req.params;
     const categoryPost = await postModel
         .find({ category })
-        .sort({ updatedAt: -1 });
-    res.status(200).json(categoryPost);
+        .sort({ updatedAt: -1 })
+        .populate("creator");
+    res.status(200).json({ status: "success", categoryPost });
 });
 
 // Unprotected. api/posts/user/:id  ================== GET POST BY AUTHOR
@@ -100,8 +101,9 @@ const getPostByAuthor = asyncErrorHandler(async (req, res, next) => {
     const { id } = req.params;
     const authorPosts = await postModel
         .find({ creator: id })
-        .sort({ updatedAt: -1 });
-    res.status(200).json(authorPosts);
+        .sort({ updatedAt: -1 })
+        .populate("creator");
+    res.status(200).json({ status: "success", authorPosts });
 });
 
 // protected. api/posts/:id (patch)  ==================  EDIT POST
@@ -206,15 +208,12 @@ const deletePost = asyncErrorHandler(async (req, res, next) => {
         // delete the post from the database
         await postModel.findByIdAndDelete(id);
         // find user and reduce the post count by 1
-        const user = await userModel.findById(req.user.id);
-        const postCount = user.no_of_posts - 1;
-        await userModel.findByIdAndUpdate(req.user.id, {
-            no_of_posts: postCount,
-        });
+        await userModel.findOneAndUpdate(
+            { _id: req.user.id },
+            { $inc: { no_of_posts: -1 } }
+        );
 
-        return res
-            .status(200)
-            .json({ status: "sucess", msg: "post deleted successfully!" });
+        return res.status(200).json({ status: "success" });
     }
 
     res.status(400).json({

@@ -58,14 +58,6 @@ const createPost = asyncErrorHandler(async (req, res, next) => {
         return next(new customErrorHandler("Post could not be created.", 422));
     }
 
-    // //   increse post count for user theat created the post
-    // const user = await userModel.findById(req.user.id);
-    // const postCount = user.no_of_posts + 1;
-    // // update the user post count with the new post count
-    // await userModel.findByIdAndUpdate(req.user.id, {
-    //     no_of_posts: postCount,
-    // });
-
     await userModel.findOneAndUpdate(
         { _id: req.user.id },
         { $inc: { no_of_posts: 1 } }
@@ -78,7 +70,7 @@ const createPost = asyncErrorHandler(async (req, res, next) => {
 const getPosts = asyncErrorHandler(async (req, res, next) => {
     const posts = await postModel
         .find()
-        .sort({ updatedAt: 1 })
+        .sort({ updatedAt: -1 })
         .populate("creator"); // -1: descending(the one that was created or updated last or most recently will appear at the top). 1: ascending
     res.status(200).json({ status: "success", posts });
 });

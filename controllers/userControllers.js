@@ -16,9 +16,7 @@ const regisiterUser = asyncErrorHandler(async (req, res, next) => {
 
     return res.status(201).json({
         status: "success",
-        data: {
-            user: newUser,
-        },
+        user: newUser,
     });
 });
 
@@ -180,9 +178,13 @@ const editUser = asyncErrorHandler(async (req, res, next) => {
 
 // get request || /api/users/ || unprotected
 // ------> Get all authors/users
-const getAuthors = (req, res) => {
-    res.json("get all authors");
-};
+const getAuthors = asyncErrorHandler(async (req, res) => {
+    const allUsers = await userModel.find();
+    res.status(200).json({
+        status: "error",
+        allUsers,
+    });
+});
 
 module.exports = {
     getAuthors,

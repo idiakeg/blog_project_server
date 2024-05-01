@@ -128,10 +128,10 @@ const changeAvatar = asyncErrorHandler(async (req, res, next) => {
         return next(new customErrorHandler(err));
     }
 
-    res.status(200).json(updatedAvatar);
+    res.status(200).json({ status: "success", updatedAvatar });
 });
 
-// post request || /api/users/edit_user || protected
+// patch request || /api/users/edit_user || protected
 // ------> Edit user details
 const editUser = asyncErrorHandler(async (req, res, next) => {
     const { name, email, currentPassword, newPassword, newConfirmPassword } =
@@ -173,7 +173,7 @@ const editUser = asyncErrorHandler(async (req, res, next) => {
         { new: true }
     );
 
-    res.status(200).json(updatedUser);
+    res.status(200).json({ status: "success", updatedUser });
 });
 
 // get request || /api/users/ || unprotected
@@ -181,7 +181,7 @@ const editUser = asyncErrorHandler(async (req, res, next) => {
 const getAuthors = asyncErrorHandler(async (req, res) => {
     const allUsers = await userModel.find();
     res.status(200).json({
-        status: "error",
+        status: "success",
         allUsers,
     });
 });

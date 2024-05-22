@@ -68,11 +68,26 @@ const createPost = asyncErrorHandler(async (req, res, next) => {
 
 // Unprotected. api/posts ================== GET ALL POSTS
 const getPosts = asyncErrorHandler(async (req, res, next) => {
+    const { page_number } = req.query;
+    const limit = 6;
+    const skip_count = (page_number - 1) * limit; // 6 is the limit
+    console.log(page_number);
+    const totalPosts = await postModel.countDocuments();
+    if (skip_count >= totalPosts) {
+        return next(new customErrorHandler("Page does not exist.", 400));
+    }
     const posts = await postModel
         .find()
         .sort({ updatedAt: -1 })
-        .populate("creator"); // -1: descending(the one that was created or updated last or most recently will appear at the top). 1: ascending
-    res.status(200).json({ status: "success", posts });
+        .populate("creator")
+        .skip(skip_count)
+        .limit(limit); // -1: descending(the one that was created or updated last or most recently will appear at the top). 1: ascending
+    res.status(200).json({
+        status: "success",
+        totalPosts,
+        pageNumber: page_number,
+        posts,
+    });
 });
 
 // Unprotected. api/posts/:id ================== GET SINGLE POST
